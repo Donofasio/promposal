@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Interactive Questions</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --cream: #f5efe6;
+        --blush: #e8c9b0;
+        --rose: #c97b63;
+        --deep: #3b1f1a;
+        --gold: #c9a96e;
+        --error: #d94f4f;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        font-family: 'Montserrat', sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: white;
+        background-color: #1a0f0c;
+    }
+
+    /* Starfield canvas */
+    #stars {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    #container {
+        position: relative;
+        z-index: 1;
+        background: rgba(20, 8, 6, 0.72);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(201, 169, 110, 0.25);
+        padding: 48px 44px 44px;
+        border-radius: 2px;
+        width: 90%;
+        max-width: 560px;
+        box-shadow: 0 0 60px rgba(201, 121, 99, 0.08), 0 0 0 1px rgba(255,255,255,0.03);
+        animation: fadeIn 1.2s ease forwards;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .ornament {
+        color: var(--gold);
+        font-size: 18px;
+        letter-spacing: 8px;
+        margin-bottom: 10px;
+        opacity: 0.7;
+    }
+
+    #progress {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 30px;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgba(201, 169, 110, 0.25);
+        transition: background 0.4s ease;
+    }
+
+    .dot.active {
+        background: var(--gold);
+    }
+
+    .dot.done {
+        background: var(--rose);
+    }
+
+    #questionText {
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.65rem;
+        font-weight: 300;
+        font-style: italic;
+        color: var(--cream);
+        margin: 0 0 28px;
+        line-height: 1.5;
+        letter-spacing: 0.02em;
+        min-height: 72px;
+        transition: opacity 0.3s ease;
+    }
+
+    #answerInput {
+        width: 100%;
+        padding: 12px 18px;
+        font-size: 15px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 300;
+        letter-spacing: 0.05em;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(201, 169, 110, 0.3);
+        border-radius: 1px;
+        color: white;
+        outline: none;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    #answerInput:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.08);
+    }
+
+    #answerInput.shake {
+        animation: shake 0.4s ease;
+        border-color: var(--error);
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20%       { transform: translateX(-8px); }
+        40%       { transform: translateX(8px); }
+        60%       { transform: translateX(-5px); }
+        80%       { transform: translateX(5px); }
+    }
+
+    #errorMsg {
+        color: var(--error);
+        font-size: 12px;
+        letter-spacing: 0.05em;
+        margin-top: 8px;
+        min-height: 18px;
+        font-weight: 300;
+        transition: opacity 0.3s;
+    }
+
+    #nextBtn {
+        margin-top: 20px;
+        padding: 12px 40px;
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        cursor: pointer;
+        border-radius: 1px;
+        border: 1px solid var(--gold);
+        background: transparent;
+        color: var(--gold);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 400;
+        transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    #nextBtn:hover {
+        background: var(--gold);
+        color: var(--deep);
+    }
+
+    /* Final section */
+    #imageSection {
+        display: none;
+        animation: fadeIn 1.2s ease forwards;
+    }
+
+    #imageSection img {
+        width: 85%;
+        border-radius: 2px;
+        margin-bottom: 24px;
+        border: 1px solid rgba(201,169,110,0.2);
+    }
+
+    #imageSection h2 {
+        font-family: 'Cormorant Garamond', serif;
+        font-weight: 300;
+        font-style: italic;
+        font-size: 1.4rem;
+        color: var(--cream);
+        line-height: 1.6;
+        margin: 0 0 28px;
+        letter-spacing: 0.02em;
+    }
+
+    .final-btns {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+    }
+
+    .final-btns button {
+        padding: 12px 36px;
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        cursor: pointer;
+        border-radius: 1px;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 400;
+        transition: all 0.3s ease;
+    }
+
+    #yesBtn {
+        border: 1px solid var(--rose);
+        background: transparent;
+        color: var(--rose);
+    }
+
+    #yesBtn:hover {
+        background: var(--rose);
+        color: white;
+    }
+
+    #noBtn {
+        border: 1px solid rgba(255,255,255,0.2);
+        background: transparent;
+        color: rgba(255,255,255,0.4);
+    }
+
+    #noBtn:hover {
+        border-color: rgba(255,255,255,0.4);
+        color: rgba(255,255,255,0.7);
+    }
+
+    #finalMessage {
+        display: none;
+        font-family: 'Cormorant Garamond', serif;
+        font-size: 1.6rem;
+        font-style: italic;
+        font-weight: 300;
+        color: var(--cream);
+        line-height: 1.6;
+        letter-spacing: 0.02em;
+        animation: fadeIn 1.2s ease forwards;
+    }
+</style>
+</head>
+<body style="background-image: url('blank.jpg');">
+
+<canvas id="stars"></canvas>
+
+<div id="container">
+    <div class="ornament">✦ &nbsp; ✦ &nbsp; ✦</div>
+
+    <div id="progress">
+        <div class="dot active" id="dot0"></div>
+        <div class="dot" id="dot1"></div>
+        <div class="dot" id="dot2"></div>
+        <div class="dot" id="dot3"></div>
+    </div>
+
+    <h2 id="questionText">When did we go to the zoo?</h2>
+    <input id="answerInput" type="text" placeholder="Your answer..." autocomplete="off" />
+    <div id="errorMsg"></div>
+    <button id="nextBtn" onclick="nextQuestion()">Continue</button>
+
+    <div id="imageSection">
+        <img src="final.jpg" alt="A special moment" onerror="this.style.display='none'">
+        <h2>I keep trying to find my way through the stars, but I only find you. Will you go to prom with me?</h2>
+        <div class="final-btns">
+            <button id="yesBtn" onclick="finalAnswer('Yes')">Yes</button>
+            <button id="noBtn" onclick="finalAnswer('No')">No</button>
+        </div>
+    </div>
+
+    <h2 id="finalMessage"></h2>
+</div>
+
+<script>
+    // --- Starfield ---
+    const canvas = document.getElementById('stars');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    function initStars() {
+        stars = [];
+        for (let i = 0; i < 160; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                r: Math.random() * 1.2 + 0.2,
+                alpha: Math.random(),
+                speed: Math.random() * 0.003 + 0.001,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+    }
+
+    function drawStars(t) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        stars.forEach(s => {
+            s.alpha = 0.3 + 0.5 * Math.sin(t * s.speed * 1000 + s.phase);
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(245, 239, 230, ${s.alpha})`;
+            ctx.fill();
+        });
+        requestAnimationFrame(drawStars);
+    }
+
+    resizeCanvas();
+    initStars();
+    requestAnimationFrame(drawStars);
+    window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+
+    // --- Quiz Logic ---
+    const questions = [
+        "When did we go to the zoo?",
+        "Where did we eat on our first date?",
+        "What color was your homecoming dress?",
+        "Where did we eat for winter formal?"
+    ];
+
+    // Each entry is an array of accepted answers (case-insensitive trimmed)
+    const answers = [
+        ["3 months", "june 26", "june 26, 2025", "06/26/26"],
+        ["cane's", "canes"],
+        ["orange"],
+        ["ika-san", "ikasan"]
+    ];
+
+    let index = 0;
+
+    // Allow Enter key
+    document.getElementById('answerInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') nextQuestion();
+    });
+
+    function nextQuestion() {
+        const input = document.getElementById('answerInput');
+        const errorMsg = document.getElementById('errorMsg');
+        const val = input.value.trim().toLowerCase();
+
+        if (!val) {
+            showError(input, "Please enter an answer before continuing.");
+            return;
+        }
+
+        if (!answers[index].includes(val)) {
+            showError(input, "That's not quite right — try again! 💭");
+            return;
+        }
+
+        // Correct!
+        errorMsg.textContent = '';
+        markDotDone(index);
+        index++;
+
+        if (index < questions.length) {
+            // Fade out, update, fade in
+            const qt = document.getElementById('questionText');
+            qt.style.opacity = '0';
+            setTimeout(() => {
+                qt.textContent = questions[index];
+                qt.style.opacity = '1';
+                input.value = '';
+                input.classList.remove('shake');
+                markDotActive(index);
+            }, 300);
+        } else {
+            showFinal();
+        }
+    }
+
+    function showError(input, msg) {
+        input.classList.remove('shake');
+        void input.offsetWidth; // reflow to restart animation
+        input.classList.add('shake');
+        document.getElementById('errorMsg').textContent = msg;
+    }
+
+    function markDotDone(i) {
+        const dot = document.getElementById('dot' + i);
+        if (dot) { dot.classList.remove('active'); dot.classList.add('done'); }
+    }
+
+    function markDotActive(i) {
+        const dot = document.getElementById('dot' + i);
+        if (dot) dot.classList.add('active');
+    }
+
+    function showFinal() {
+        document.getElementById('questionText').style.display = 'none';
+        document.getElementById('answerInput').style.display = 'none';
+        document.getElementById('errorMsg').style.display = 'none';
+        document.getElementById('nextBtn').style.display = 'none';
+        document.getElementById('progress').style.display = 'none';
+        document.querySelector('.ornament').style.display = 'none';
+        document.getElementById('imageSection').style.display = 'block';
+    }
+
+    function finalAnswer(response) {
+        document.getElementById('imageSection').style.display = 'none';
+        const finalMsg = document.getElementById('finalMessage');
+        finalMsg.style.display = 'block';
+        if (response === 'Yes') {
+            finalMsg.innerHTML = '🌟 You said yes! I cannot wait. 🌟';
+        } else {
+            // Playfully nudge them back
+            document.getElementById('imageSection').style.display = 'block';
+            finalMsg.style.display = 'none';
+        }
+    }
+
+    // Make "No" button drift away on hover for fun
+    const noBtn = document.getElementById('noBtn');
+    noBtn.addEventListener('mouseover', function() {
+        const maxX = 200, maxY = 80;
+        const rx = (Math.random() - 0.5) * maxX;
+        const ry = (Math.random() - 0.5) * maxY;
+        noBtn.style.transform = `translate(${rx}px, ${ry}px)`;
+        noBtn.style.transition = 'transform 0.3s ease';
+    });
+</script>
+</body>
+</html>
